@@ -6,7 +6,6 @@ class wsPush
     private $mcache;
     private $conn_head = 'user_cnn_';
     private $client_index = 'push_manager';
-    private $client_token = '123456';
     private $port = 4567;
 
     function __construct()

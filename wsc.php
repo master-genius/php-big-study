@@ -8,8 +8,6 @@ $cli->on('message',function($cli,$frame){
 
 });
 
-$cli->setData('token=123456');
-
 $cli->upgrade('/',function($cli){
     go_on:;
     $cli->push(md5(time()));
