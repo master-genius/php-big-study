@@ -5,13 +5,11 @@ class wsChat
     
     private $sock_list = [];
     private $server;
-    private $server_pid;
     private $mcache;
     private $conn_head = 'user_cnn_';
 
     function __construct()
     {
-        $this->server_pid = posix_getpid();
         $this->mcache = new Memcached('websocket_pool');
         $this->mcache->addServer('localhost',11211);
         $this->server = new swoole_websocket_server('localhost',9876);
@@ -23,7 +21,7 @@ class wsChat
     public function on_message($server, $cnn) {
         $data = json_decode($cnn->data,true);
         $msg = (isset($data['msg'])?$data['msg']:'');
-        if (empty($msg)) {
+        if (empty($msg)){
             return ;
         }
         $send_msg = [
@@ -34,7 +32,6 @@ class wsChat
         $keys = $this->mcache->getAllKeys();
         $this->mcache->getDelayed($keys);
         $key_vals = $this->mcache->fetchAll();
-        //var_dump($key_vals);
         foreach ($key_vals as $kv) {
             if ($kv['value']==$cnn->fd) {
                 continue;

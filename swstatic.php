@@ -11,7 +11,7 @@ $sw_http_serv->set([
 
 //注册request事件回调函数
 $sw_http_serv->on('request',function($request,$response){
-
+    $response->write("Error: file not found");
 });
 //启动服务
 $sw_http_serv->start();

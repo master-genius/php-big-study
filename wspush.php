@@ -10,9 +10,12 @@ class wsPush
 
     function __construct()
     {
-        $this->mcache = new Memcached('websocket_pool');
+        $this->mcache = new Memcached('websocket_push');
         $this->mcache->addServer('localhost',11211);
         $this->server = new swoole_websocket_server('localhost',$this->port);
+        $this->server->set([
+            'daemonize'=>1
+        ]);
     }
 
     public function on_message($server, $cnn) {
@@ -57,7 +60,24 @@ class wsPush
 
         $this->server->on('shutdown',[$this,'on_shutdown']);
         
-        $this->server->start();
+        //$this->server->start();
+        $this->real_start();
+    }
+
+    public function real_start() {
+        $pid = pcntl_fork();
+        if ($pid<0) {
+            exit(-1); 
+        }
+        elseif ($pid==0) {
+            //start a client
+            sleep(1);
+            include 'wspush_client.php';
+        }
+        elseif ($pid > 0) {
+            $this->server->start();
+        }
+
     }
 }
 
