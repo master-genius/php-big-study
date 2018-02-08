@@ -24,6 +24,7 @@ class wsChat
         ]);
     }
 
+    //get username by token_$fd
     private function getUser($fd) {
         $token = $this->auth_cache->get('token_'.$fd);
         return $this->auth_cache->get($token);
@@ -56,7 +57,6 @@ class wsChat
         $this->mcache->quit();
         $this->auth_cache->deleteMulti($this->auth_cache->getAllKeys());
         $this->auth_cache->quit();
-        
     }
 
     public function on_open($server, $req) {
@@ -77,6 +77,7 @@ class wsChat
 
     public function on_close($server,$fd) {
         $this->mcache->delete($this->conn_head.$fd,0);
+        $this->auth_cache->delete('token_'.$fd,0);
     }
 
     public function start_server() {
