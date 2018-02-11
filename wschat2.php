@@ -1,8 +1,6 @@
 <?php
-
 class wsChat
 {
-    
     private $sock_list = [];
     private $server;
     private $server_pid;
@@ -13,12 +11,12 @@ class wsChat
     function __construct()
     {
         $this->server_pid = posix_getpid();
-        $this->mcache = new Memcached('websocket_pool');
+        $this->mcache = new Memcached('wschat_pool');
         $this->auth_cache = new Memcached('auth');
         $this->auth_cache->addServer('localhost',11211);
         $this->mcache->addServer('localhost',11211);
 
-        $this->server = new swoole_websocket_server('localhost',9876);
+        $this->server = new swoole_websocket_server('localhost',7654);
         $this->server->set([
             'daemonize' => 1
         ]);
@@ -61,7 +59,10 @@ class wsChat
 
     public function on_open($server, $req) {
         if (!$this->auth_cache->get($req->get['user_token'])) {
-            //$server->push($req->fd,'Error: you need login');
+            $server->push($req->fd,json_encode([
+                'msg_source'=>'server',
+                'msg'=>'you need to login'
+            ]));
             $server->close($req->fd);
         }
         $this->mcache->set($this->conn_head.$req->fd, $req->fd);

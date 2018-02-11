@@ -23,8 +23,10 @@
       .msg-list-block{
         border-right:.1rem solid #dd5c5c;
         width:100%;
-        height:75%;
+        min-height: 20rem;
+        max-height: 23rem;
         overflow-y: auto;
+        border: .1rem solid #ff6347 ;
       }
     </style>
   </head>
@@ -94,6 +96,8 @@
             msg_count += 1;
             msg = json_msg.from_id+':<br>&nbsp;&nbsp;&nbsp;&nbsp;'+json_msg.msg+'<br>';
             brutal.autod('#msg-list',msg,true);
+            brutal.autonode('#msg-list').scrollTop = 
+            brutal.autonode('#msg-list').scrollHeight;
           }
           
           
@@ -107,6 +111,8 @@
         ws.send( JSON.stringify( {"msg":msg} ) );
         brutal.autod('#my-message','');
         brutal.autod('#msg-list','<p style="text-align:right;">'+msg+'</p>',true);
+        brutal.autonode('#msg-list').scrollTop = 
+            brutal.autonode('#msg-list').scrollHeight;
       }
 
       
