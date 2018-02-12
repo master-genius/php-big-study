@@ -105,18 +105,18 @@
       if (localStorage.getItem('user_token')) {
         conn.token = localStorage.getItem('user_token');
         init_conn();
-        brutal.autonode('#logout').className="";
       } else {
         show_login();
-        brutal.autonode('#logout').className="hide";
       }
 
       function init_conn() {
         conn.ws = new WebSocket(conn.url+"?user_token="+conn.token);
         conn.ws.onopen = function() {
+          brutal.autonode('#logout').className="";
         };
         conn.ws.onclose = function() {
           //clear connect
+          brutal.autonode('#logout').className="hide";
         }
         conn.ws.onmessage = function (evt) {
             if (msg_count > 1000) {
@@ -138,7 +138,6 @@
               brutal.autonode('#msg-list-block').scrollTop = 
                 brutal.autonode('#msg-list-block').scrollHeight;
             }
-            
             
         };
 
@@ -189,7 +188,6 @@
               localStorage.setItem('user_token',xr.token);
               brutal.autod('#msg-list','');
               init_conn();
-              brutal.autonode('#logout').className="";
             }
           }
         });
@@ -197,6 +195,7 @@
 
       function ajax_logout() {
         conn.ws.send( JSON.stringify( {"msg":'//logout'} ) );
+        conn.ws.close();
         localStorage.removeItem('user_token');
         show_login();
         brutal.autonode('#logout').className="hide";

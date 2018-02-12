@@ -68,7 +68,7 @@ class wsChat
         if (!$this->auth_cache->get($req->get['user_token'])) {
             $server->push($req->fd,json_encode([
                 'msg_source'=>'server',
-                'msg'=>'you need to login',
+                'msg'=>'you need to login.'.$req->get['user_token'],
                 'error'=>-1
             ]));
             $server->close($req->fd);
