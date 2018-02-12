@@ -60,6 +60,9 @@
       <div class="system-msg-block" id="system-msg-block">
           <div class="row">
             <div class="column small-12" style="">
+              <a href="javascript:ajax_logout();" id="logout" class="hide">
+                <h5 style="color:#ff4512;">Logout</h5>
+              </a>
               <div id="system-info">
   
               </div>
@@ -102,8 +105,10 @@
       if (localStorage.getItem('user_token')) {
         conn.token = localStorage.getItem('user_token');
         init_conn();
+        brutal.autonode('#logout').className="";
       } else {
         show_login();
+        brutal.autonode('#logout').className="hide";
       }
 
       function init_conn() {
@@ -121,12 +126,17 @@
             var msg = '';
             if (json_msg.msg_source!==undefined) {
               brutal.autod('#system-info','<p>'+json_msg.msg+'</p>',true);
+              if (json_msg.error!==undefined && json_msg.error==-1) {
+                localStorage.removeItem('user_token');
+                show_login();
+                conn.ws.close();
+              }
             } else {
               msg_count += 1;
               msg = json_msg.from_id+':<br>&nbsp;&nbsp;&nbsp;&nbsp;'+json_msg.msg+'<br>';
               brutal.autod('#msg-list',msg,true);
               brutal.autonode('#msg-list-block').scrollTop = 
-              brutal.autonode('#msg-list-block').scrollHeight;
+                brutal.autonode('#msg-list-block').scrollHeight;
             }
             
             
@@ -148,17 +158,17 @@
       
       function show_login()
       {
-        var html = '<div class="row">'+
-          '<div class="small-1 column">&nbsp;</div>'+
-          '<div class="small-10 column">'+
+        var html = '<div class="row" style="margin-top:1.2%;">'+
+          '<div class="small-2 column">&nbsp;</div>'+
+          '<div class="small-8 column">'+
             '<form onsubmit="return false;">'+
-              '<input type="text" id="username">'+
-              '<input type="text" id="passwd">'+
+              '<input type="text" id="username" placeholder="username">'+
+              '<input type="text" id="passwd" placeholder="passwd">'+
               '<input type="submit" value="submit" class="button hollow small alert" onclick="ajax_login()">'+
             '</form>'+
             '<p id="login-tip"></p>'+
           '</div>'+
-          '<div class="small-1 column">&nbsp;</div>'+
+          '<div class="small-2 column">&nbsp;</div>'+
         '</div>';
         brutal.autod('#msg-list',html);
       }
@@ -179,9 +189,17 @@
               localStorage.setItem('user_token',xr.token);
               brutal.autod('#msg-list','');
               init_conn();
+              brutal.autonode('#logout').className="";
             }
           }
         });
+      }
+
+      function ajax_logout() {
+        conn.ws.send( JSON.stringify( {"msg":'//logout'} ) );
+        localStorage.removeItem('user_token');
+        show_login();
+        brutal.autonode('#logout').className="hide";
       }
       
     </script>

@@ -34,6 +34,13 @@ class wsChat
         if (empty($msg)) {
             return ;
         }
+        //check if logout
+        if ($msg=='//logout') {
+            $this->logout($cnn->fd);
+            $server->close($cnn->fd);
+            return ;
+        }
+
         $send_msg = [
             'from_id'=>$this->getUser($cnn->fd),
             'msg'=>$msg,
@@ -61,7 +68,8 @@ class wsChat
         if (!$this->auth_cache->get($req->get['user_token'])) {
             $server->push($req->fd,json_encode([
                 'msg_source'=>'server',
-                'msg'=>'you need to login'
+                'msg'=>'you need to login',
+                'error'=>-1
             ]));
             $server->close($req->fd);
         }
@@ -79,6 +87,11 @@ class wsChat
     public function on_close($server,$fd) {
         $this->mcache->delete($this->conn_head.$fd,0);
         $this->auth_cache->delete('token_'.$fd,0);
+    }
+
+    public function logout($fd) {
+        //通过token和连接套接字的关联获取user_token并删除
+        $this->auth_cache->delete($this->auth_cache->get('token_'.$fd),0);
     }
 
     public function start_server() {

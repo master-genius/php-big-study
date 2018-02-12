@@ -36,11 +36,11 @@ class wsAuth
             $mch->addServer('localhost',11211);
             
             if ($mch->get($username)) {
-                return json_encode(['error'=>1,'errmsg'=>'already login']);    
+                exit(json_encode(['error'=>0,'token'=>$mch->get($username)]));  
             }
 
             $mch->set($token,$username);
-            $mch->set($username, 'login');
+            $mch->set($username, $token);
             $mch->quit();
 
             exit(json_encode(['token'=>$token,'error'=>0]));
