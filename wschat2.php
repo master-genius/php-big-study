@@ -90,8 +90,10 @@ class wsChat
     }
 
     public function logout($fd) {
+        $username = $this->getUser($fd);
         //通过token和连接套接字的关联获取user_token并删除
         $this->auth_cache->delete($this->auth_cache->get('token_'.$fd),0);
+        $this->auth_cache->delete($username,0);
     }
 
     public function start_server() {
