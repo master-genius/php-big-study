@@ -95,15 +95,18 @@
 
       var conn = {
         ip:"<?php if(isset($_view['ip'])){echo $_view['ip'];} ?>",
-        port:7654,
+        login_port:1990,
+        chat_port:7654,
         url:'ws://',
         ws:null,
         login_status:0,
         token:'',
       };
 
+      
+
       function conn_url() {
-        return 'ws://'+conn.ip+':'+conn.port+'?user_token='+conn.token;
+        return 'ws://'+conn.ip+':'+conn.chat_port+'?user_token='+conn.token;
       }
       /*
          由于刷新页面，Websocket会断开连接。每次刷新页面需要重新发起连接，这要求根据登录状态确定是否发起连接，如果已经登录则发起连接，否则等待用户输入密码通过验证后发起连接。
@@ -185,7 +188,7 @@
           passwd:brutal.autod('#passwd')
         };
         brutal.areq.post({
-          url:'http://127.0.0.1:1990/wsauth.php',
+          url:'http://'+conn.ip+':'+conn.login_port+'/wsauth.php',
           data:brutal.jsontodata(user),
           success:function(xr){
             if (xr.error) {
