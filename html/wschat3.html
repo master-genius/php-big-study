@@ -109,7 +109,9 @@
         return 'ws://'+conn.ip+':'+conn.chat_port+'?user_token='+conn.token;
       }
       /*
-         由于刷新页面，Websocket会断开连接。每次刷新页面需要重新发起连接，这要求根据登录状态确定是否发起连接，如果已经登录则发起连接，否则等待用户输入密码通过验证后发起连接。
+         由于刷新页面，Websocket会断开连接。每次刷新页面需要重新发起连接，
+         这要求根据登录状态确定是否发起连接，如果已经登录则发起连接，
+         否则等待用户输入密码通过验证后发起连接。
       */
       
       if (localStorage.getItem('user_token')) {
