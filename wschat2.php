@@ -42,7 +42,7 @@ class wsChat
         }
 
         $send_msg = [
-            'from_id'=>$this->getUser($cnn->fd),
+            'from'=>$this->getUser($cnn->fd),
             'msg'=>$msg,
             'time'=>time(),
         ];

@@ -1,0 +1,14 @@
+{
+    "require": {
+        "slim/slim": "^3.0",
+        "catfan/Medoo": "^1.5"
+    },
+    "autoload":{
+        "files":["./lib/helper.php"],
+        "psr-4":{
+            "bravemaster\\model\\":"model",
+            "bravemaster\\core\\":"core",
+            "bravemaster\\action\\":"action"
+        }
+    }
+}

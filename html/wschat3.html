@@ -145,7 +145,7 @@
               }
             } else {
               msg_count += 1;
-              msg = json_msg.from_id+':<br>&nbsp;&nbsp;&nbsp;&nbsp;'+json_msg.msg+'<br>';
+              msg = json_msg.from+':<br>&nbsp;&nbsp;&nbsp;&nbsp;'+json_msg.msg+'<br>';
               brutal.autod('#msg-list',msg,true);
               brutal.autonode('#msg-list-block').scrollTop = 
                 brutal.autonode('#msg-list-block').scrollHeight;

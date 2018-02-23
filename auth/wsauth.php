@@ -1,6 +1,6 @@
 <?php
 header('Access-Control-Allow-Origin: *');
-(new wsAuth)->pass();
+(new wsAuth)->login();
 
 class wsAuth
 {
@@ -23,7 +23,7 @@ class wsAuth
     
     }
 
-    public function pass()
+    public function login()
     {
         $username = (isset($_POST['username']))?$_POST['username']:'';
         $passwd = (isset($_POST['passwd']))?$_POST['passwd']:'';
@@ -52,6 +52,16 @@ class wsAuth
     private function genToken($user)
     {
         return hash('sha256',md5($user.time()) . mt_rand(1000,10000));
+    }
+
+    public function register()
+    {
+        $username = isset($_POST['username'])?$_POST['username']:'';
+        $passwd = isset($_POST['passwd'])?$_POST['passwd']:'';
+        
+
+
+
     }
 }
 
