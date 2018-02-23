@@ -5,8 +5,6 @@ use bravemaster\core\wdb;
 
 class wsuser
 {
-    private mcache = null;
-
     public function __construct()
     {
     
@@ -14,11 +12,18 @@ class wsuser
 
     public function login()
     {
-    
-        $username = (isset($_POST['username']))?$_POST['username']:'';
-        $passwd = (isset($_POST['passwd']))?$_POST['passwd']:'';
+        $username = request_data('post','username','');
+        $passwd = request_data('post','passwd','');
+        $condition = [
+            'AND' => [
+                'username' => $username,
+                'passwd'   => md5($passwd)
+            ]
+        ];
 
-        if (isset($this->user_data[$username])&&($this->user_data[$username]['passwd'] == $passwd)){
+        $user = wdb::instance()->get('users','username,passwd',$condition);
+
+        if ($user){
             
             $token = $this->genToken($username);
             
@@ -39,12 +44,30 @@ class wsuser
         exit(json_encode(['error'  => -1,'errmsg' => 'user not exists or password error.']));
     }
 
-    private function genToken($user)
+    private function genToken($u)
     {
-        return hash('sha256',md5($user.time()) . mt_rand(1000,10000));
+        return hash('sha256',md5($u.time()) . mt_rand(1000,10000));
     }
- 
+    
+    public function register()
+    {
+        $username = request_data('post','username','');
+        $passwd = request_data('post','passwd','');
+        
+        if (empty($username) || empty($passwd)) {
+            return ['errcode'=>-1,'errmsg'=>'username/passwd not be empty.'];
+        }
 
+        $user = wdb::instance()->get('users','username',['username'=>$username]);
 
+        if (!$user) {
+            return ['errcode'=>-1,'errmsg'=>'username already register.'];
+        }
+        $r = wdb::instance()->insert('users',['username'=>$username,'passwd'=>md5($passwd)]);
+        if (!$r) {
+            return ['errcode'=>-1,'errmsg'=>'failed to register.'];
+        }
+        return ['errcode'=>0,'errmsg'=>'success'];
+    }
 }
 
