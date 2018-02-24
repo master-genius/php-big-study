@@ -8,7 +8,7 @@ $errcode = 0;
 $count = 1;
 
 while (true) {
-    usleep(100);
+    usleep(1000);
     msg_receive($mq,0,$msgtype,100,$msg,true,0,$errcode);
     if (!$errcode) {
         echo "Received message($count): ",$msg,"\n";

@@ -1,5 +1,11 @@
 <?php
 
+pcntl_fork();
+pcntl_fork();
+
+$pid = posix_getpid();
+echo "$pid running\n";
+
 $mq = msg_get_queue(1234);
 
 $msg_err=0;
