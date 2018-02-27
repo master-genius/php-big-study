@@ -4,17 +4,22 @@ require '../vendor/autoload.php';
 //use Medoo\Medoo;
 //use bravemaster\core\apicall;
 use bravemaster\action\wsuser;
+use bravemaster\action\syncdb;
 
 define('ROOT_PATH', dirname(__FILE__) . '/');
 define('APP_PATH', dirname(ROOT_PATH) );
-
-$api = new apicall;
 
 $config = [];
 
 $config['wsuser'] = new wsuser;
 // 实例化 App 对象
 $app = new \Slim\App($config);
+
+$app->get('/', function($request, $response, $args){
+    return $response->withHeader('Access-Control-Allow-Origin','*')
+                    ->withStatus(200)
+                    ->write("success");
+});
 
 $app->get('/login', function($request, $response, $args){
     $r = $this->get('wsuser')->login();
@@ -28,6 +33,13 @@ $app->get('/register', function($request, $response, $args){
     return $response->withHeader('Access-Control-Allow-Origin','*')
                     ->withStatus(200)
                     ->write(json_encode($r));
+});
+
+$app->get('/putdata', function($request, $response, $args){
+    $r = (new syncdb)->udata();
+    return $response->withHeader('Access-Control-Allow-Origin','*')
+                    ->withStatus(200)
+                    ->write($r);
 });
 
 /*
