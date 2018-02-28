@@ -1,4 +1,5 @@
 <?php
+
 function sub_handle($rd, $chan, $msg)
 {
     switch ($chan)  {
@@ -16,7 +17,10 @@ function sub_handle($rd, $chan, $msg)
 }
 
 $rd = new Redis();
-//$rd->connect('127.0.0.1',6379);
-$rd->connect('127.0.0.1',6379,10,NULL,50);
+
+$rd->pconnect('127.0.0.1',6379);
+
+$rd->setOption(Redis::OPT_READ_TIMEOUT, -1);
+
 $rd->subscribe(['chan1','chan2','chan3'], 'sub_handle');
 

@@ -14,7 +14,7 @@ class wsPush
         $this->mcache->addServer('localhost',11211);
         $this->server = new swoole_websocket_server('localhost',$this->port);
         $this->server->set([
-            'daemonize'=>1
+            'daemonize'=>0
         ]);
     }
 
@@ -40,10 +40,12 @@ class wsPush
     }
 
     public function on_open($server, $req) {
+        //var_dump($req);
         $tmp_key = $this->conn_head . $req->fd;
-        if ($req->server['remote_addr'] == '127.0.0.1') {
+        if ($req->server['path_info'] == '/push_client/1001001') {
             $tmp_key = $this->client_index;
         }
+        
         $this->mcache->set($tmp_key, $req->fd);
     }
 
@@ -60,8 +62,8 @@ class wsPush
 
         $this->server->on('shutdown',[$this,'on_shutdown']);
         
-        //$this->server->start();
-        $this->real_start();
+        $this->server->start();
+        //$this->real_start();
     }
 
     public function real_start() {

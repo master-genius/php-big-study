@@ -8,7 +8,9 @@ $cli->on('message',function($cli,$frame){
 
 });
 
-$cli->upgrade('/',function($cli){
+//$cli->setHeaders([['push-connect-token','1001001'],]);
+
+$cli->upgrade('/push_client/1001001',function($cli){
     go_on:;
     $cli->push(md5(time()));
     sleep(1);
