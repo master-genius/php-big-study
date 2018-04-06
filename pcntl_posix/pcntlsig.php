@@ -15,6 +15,6 @@ pcntl_signal(SIGINT, "signal_handler");
 pcntl_signal(SIGTERM, "signal_handler");
 echo posix_getpid() . "\n";
 while (true) {
-    usleep(100000);
+    usleep(10000);
 }
 

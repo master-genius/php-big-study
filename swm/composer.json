@@ -1,0 +1,15 @@
+{
+    "require": {
+        "catfan/medoo": "^1.5",
+        "slim/slim": "^3.0"
+    },
+    "autoload":{
+        "files":["./lib/common.php"],
+        "psr-4":{
+            "app\\":"app",
+            "mcore\\":"core",
+            "model\\":"model",
+            "action\\":"action"
+        }
+    }
+}
