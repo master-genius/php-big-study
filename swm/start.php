@@ -24,7 +24,12 @@ $app->group('/user',function() use ($app) {
     
     $post = $this->getParsedBody();
     if (!isset($post['username']) && !isset($post['passwd'])) {
-        exit(response_api($response, -1, 'Error: less username and password')); 
+        exit(response_api(
+                    $response, 
+                    -1, 
+                    'Error: less username and password'
+                )
+            ); 
     }
 
     $response = $next($request, $response);
@@ -71,7 +76,9 @@ $app->group('/api',function () use ($app) {
         exit(response_api($response, -1, 'Error: less token'));
     }
     $check = (new \model\user)->checkToken($token);
-
+    if (!$check) {
+        exit(response_api($response,-1,'Error: permission denied'));
+    }
 
     $response = $next($request, $response);
 

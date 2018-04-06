@@ -10,39 +10,10 @@ class login
     
     public function login($req, $res)
     { 
-        //$username = $request->getParsedBody()['username'];
-        //$passwd = $request->getParsedBody()['passwd'];
-
-        //$task = $this->getCurTask();
-
+        $post = $req->getParsedBody();
         $username = $post['username'];
         $passwd = $post['passwd'];
-        $task = (new \model\task)->getTaskById(
-                    $request->getQueryParams()['task_id']
-                );
 
-        if (empty($task)) {
-            return response_api($response, -1, 'Error: no current task');
-        }
-
-        $pass = (new \model\user)->checkUser($username,$passwd);
-
-        $task_file = $request->getUploadedFiles();
-        if (isset($task_file['task'])) {
-            $r = (new \mcore\upload)->up($task_file,
-                    TASK_PATH.'/'.$task['task_id'].'_'.$username
-                );
-            if($r){
-                return response_api($response);
-            }
-            
-        }
-        else {
-            return response_api($response,
-                        -1,
-                        'Error:task file not found'
-                    );
-        }
     }
 
     public function getcomment($request, $response)
