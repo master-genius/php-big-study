@@ -69,26 +69,17 @@ class wsChat
         ],JSON_UNESCAPED_UNICODE);
     }
     //格式化系统推送消息
-    public function format_sysmsg($msg, $type, $to, $msg_type, $errcode=0)
+    public function format_sysmsg($msg, $to, $push_type, $errcode=0)
     {
-        switch ($type) {
-            //system message: error,notice
-            case 'server':
-                $fmsg['msg_source'] = 'server';
-                $fmsg['msg'] = $msg;
-                $fmsg['error'] = $errcode;
-                break;
-            //system push
-            case 'push':
-                $fmsg['msg_source'] = 'push';
-                $fmsg['msg_type'] = $msg_type;
-                $fmsg['msg'] = $msg;
-                $fmsg['msg_time'] = time();
-                break;
-            default:;
-        }
+        $sysmsg = [
+            'msg_type' => 'server_push',
+            'to' => $to,
+            'msg' => $msg,
+            'errcode' => $errcode,
+            'push_type' => $push_type
+        ];
 
-        return  json_encode($fmsg,JSON_UNESCAPED_UNICODE);
+        return  json_encode($sysmsg,JSON_UNESCAPED_UNICODE);
     }
 
     protected function parsemsg($data)
@@ -97,14 +88,33 @@ class wsChat
         if (empty($org_msg)) {
             return false;
         }
-        
+        if (!isset($org_msg['msg_type'])) {
+            return false;
+        }
+        else{
+            if (false===array_search($org_msg['msg_type'], ['text','image','note'])) {
+                return false;
+            }
+        }
+        if (
+                !isset($org_msg['msg']) 
+                || 
+                !isset($org_msg['from']) 
+                || 
+                !isset($org_msg['to'])
+           ) {
+            return false;
+        }
+
+        return $org_msg;
     }
 
     public function on_message($server, $cnn)
     {
         $data = json_decode($cnn->data,true);
-        $msg = (isset($data['msg'])?$data['msg']:'');
+        $msg = $this->parsemsg($cnn->data);
         if (empty($msg)) {
+            $server->push($cnn->fd, $this->format_sysmsg());
             return ;
         }
         //check if logout
