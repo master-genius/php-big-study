@@ -14,29 +14,18 @@ class user
 
     public function login($username, $passwd)
     {
-        $u = DB::instance()->select(
-                        $this->table, "*",
-                        [
-                            'AND'=>[
-                                'username' => $username,
-                                'passwd' => $passwd
-                            ]
-                        ]
-                    );
+        $u = $this->userInfo($username, $passwd);
         if (empty($u)) {
             return false;
         }
 
-        
+        $mch = $this->memCache();        
         $token = $mch->get($username); 
-
+        $mch->quit();
         if ($token) {
-            $mch->quit();
             return $token;
         }
-
-
-        return $token;
+        return $this->setToken($username);
     }
 
     private function genToken($user)
@@ -48,10 +37,12 @@ class user
     {
         $check = $this->userInfo($u['username']);
         if  ($check) {
+            //user already here
             return -1;
         }
 
         $u['passwd'] = $this->hashPasswd($u['passwd']);
+        $u['friend_list'] = serialize([]);
         
         $r = DB::instance()->insert($this->table, $u);
         if (!$r) {
@@ -95,17 +86,18 @@ class user
     }
 
     private function memCache(){
-        $mch = new Memcached('auth');
+        $mch = new \Memcached('auth');
         $mch->addServer('localhost',11211);
         return $mch;
     }
 
-    public function setToken($username, $token){
+    public function setToken($username){
         $mch = $this->memCache();
         $token = $this->genToken($username);
         $mch->set($token,$username);
         $mch->set($username, $token);
         $mch->quit();
+        return $token;
     }
 
     public function checkToken($token)

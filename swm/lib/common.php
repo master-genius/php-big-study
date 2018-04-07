@@ -193,10 +193,18 @@ function walk_arr($a)
 
 function response_api($response, $status=0, $info='success')
 {
-    return $response->withStatus(200)->write(json_encode([
+    return $response->withHeader('Access-Control-Allow-Origin:','*')
+            ->withStatus(200)->write(json_encode([
                 'status' => $status,
                 'info' => $info
                ],JSON_UNESCAPED_UNICODE)
            );
+}
+
+function ret_api($response, $data)
+{
+    return $response->withHeader('Access-Control-Allow-Origin:','*')
+            ->withStatus(200)
+            ->write( json_encode($data,JSON_UNESCAPED_UNICODE) );
 }
 

@@ -47,7 +47,7 @@ class wsChat
         $this->auth_cache->delete($this->auth_cache->get('token_'.$fd),0);
         $this->auth_cache->delete($username,0);
     }
-
+    //格式化用户消息
     public function format_usermsg($from,$to,$msg,$msg_type,$msg_time)
     {
         return json_encode([
@@ -56,9 +56,9 @@ class wsChat
             'msg'       => $msg,
             'msg_type'  => $msg_type,
             'time'      => $msg_time
-        ]);
+        ],JSON_UNESCAPED_UNICODE);
     }
-
+    //格式化组群发消息
     public function format_groupmsg($msg,$msg_type,$msg_time,$from)
     {
         return json_encode([
@@ -66,9 +66,9 @@ class wsChat
             'msg'      => $msg,
             'msg_time' => $msg_time,
             'msg_type' => $msg_type
-        ]);
+        ],JSON_UNESCAPED_UNICODE);
     }
-
+    //格式化系统推送消息
     public function format_sysmsg($msg, $type, $to, $msg_type, $errcode=0)
     {
         switch ($type) {
@@ -88,9 +88,17 @@ class wsChat
             default:;
         }
 
-        return  json_encode($fmsg);
+        return  json_encode($fmsg,JSON_UNESCAPED_UNICODE);
     }
 
+    protected function parsemsg($data)
+    {
+        $org_msg = json_decode($data, true);
+        if (empty($org_msg)) {
+            return false;
+        }
+        
+    }
 
     public function on_message($server, $cnn)
     {

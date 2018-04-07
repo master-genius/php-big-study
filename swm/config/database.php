@@ -2,7 +2,7 @@
 
 return [
     'database_type' => 'mysql',
-    'database_name' => 'linux_study',
+    'database_name' => 'swmsg',
     'server' => '127.0.0.1',
     'username' => 'master',
     'password' => 'master2018',

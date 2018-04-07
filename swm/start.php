@@ -7,7 +7,7 @@ $app = new \Slim\App;
 $app->group('/user',function() use ($app) {
     
     $app->post(
-        '/auth', 
+        '/login', 
         function ($request, $response) {
             return (new \action\auth)->login($request, $response);
         }
@@ -22,7 +22,7 @@ $app->group('/user',function() use ($app) {
 
 })->add(function($request, $response, $next){
     
-    $post = $this->getParsedBody();
+    $post = $request->getParsedBody();
     if (!isset($post['username']) && !isset($post['passwd'])) {
         exit(response_api(
                     $response, 

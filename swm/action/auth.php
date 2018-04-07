@@ -1,7 +1,7 @@
 <?php
 namespace action;
 
-class login
+class auth
 {
     public function __construct()
     {
@@ -13,99 +13,29 @@ class login
         $post = $req->getParsedBody();
         $username = $post['username'];
         $passwd = $post['passwd'];
-
-    }
-
-    public function getcomment($request, $response)
-    {
-    
-    }
-
-    public function getTaskStatus($request, $response)
-    {
-        
-    }
-
-    public function checkTask()
-    {
-        if (empty($this->getCurTask())) {
-            return false;
-        }
-    }
-
-    public function getStTask($request, $response)
-    {
-        $task = $this->getCurTask();
-        if(empty($task)) {
-            return response_api($response, -1,
-                        'Error: task empty'
-                    );
+        $token = (new \model\user)->login($username, $passwd);
+        if (empty($token)) {
+            return response_api($res,-1,'Error: permission denied');
         }
 
-        return $response->withStatus(200)->write(
-                        $this->formatTask($task)
-                );
-
+        return ret_api($res, ['user_token' => $token]);
     }
 
-    private function formatTask($task_list)
+    public function register($req, $res)
     {
-        $task = '';
-        foreach ($task_list as $t) {
-            $task .= "task id: ".$t['task_id'] . "\n".
-                    "start time: ".format_time($t['start_time']) . "\n".
-                    "end time: " . format_time($t['end_time']) . "\n".
-                    "content: " . $t['task_content'] . "\n".
-                    "\n";
+        $post = $req->getParsedBody();
+        $u = []; 
+        $u['username'] = $post['username'];
+        $u['passwd'] = $post['passwd'];
+        $r = (new \model\user)->register($u);
+        if ($r === -1) {
+            return response_api($res, -1, 'Error: user already register');
         }
-        return $task;
-    }
-
-    public function getCurTask()
-    {
-        return (new \model\task)->getCurTask();
-    }
-
-    public function pubTask($request, $response)
-    {
-        $r = (new \model\user)->checkTeachAdmin(
-                        $args['admin'],
-                        $args['passwd']
-                    );
-
-        if (!$r) {
-            return response_api($response, -1, 'Error: permission denied');
+        elseif (!$r) {
+            return response_api($res, -1, 'Error: failed to register');
         }
         
-        $post = $request->getParsedBody();
-        $start_time = (isset($post['start_time'])
-                        ?
-                        $post['start_time']
-                        :
-                        time()
-                      );
-        $end_time = (isset($post['end_time'])
-                     ?
-                     $post['end_time']
-                     :
-                     (time()+72000)
-                    );
-        $task = [
-            'task_content' => $post['content'],
-            'start_time' => $start_time,
-            'end_time' => $end_time
-        ];
-        
-        $r = (new \model\task)->pubTask($task);
-
-        if (!$r) {
-            return response_api($response, -1, 
-                        'Error: publish task failed'
-                    );
-        }
-        
-        return response_api($response);
-
+        return response_api($res);
     }
 
 }
