@@ -7,6 +7,7 @@ class wsChat
     private $mcache;
     private $auth_cache;
     private $conn_head = 'user_cnn_';
+    private $redis_out = '';
 
     function __construct()
     {
@@ -29,16 +30,50 @@ class wsChat
     }
 
     //bind token and sock id
-    protected function bindTokenConn($token, $fd)
+    protected function bindTokenSock($token, $fd)
     {
+        /*
+            绑定token和sock连接，此操作要获取之前已保存的token => [user info]信息
+            通过sock_$fd可以找到token，通过token可以找到用户信息，为了可以快速转发消息
+            在用户发送消息时，要能够通过username直接获取sock连接（如果存在）。
+            这要求必须要存储username到sock的映射关系
+        */
         $this->auth_cache->set('sock_'.$fd, $token);
-        $username = $this->auth_cache->get($token);
-        $this->auth_cache->set('user_'.$token, serialize(['username'=>$username, 'sock'=>$fd]));
+        $userinfo = $this->auth_cache->get($token);
+        $userinfo = unserialize($userinfo);
+        $this->auth_cache->set($userinfo['username'], $fd);
+        //$this->auth_cache->set($token, serialize($userinfo));
+    }
+
+    protected function getSockByUsername($username)
+    {
+        $sock = $this->auth_cache->get($username);
+        return ($sock?$sock:false);
     }
 
     protected function checkUser($token)
     {
         return ($this->auth_cache->get($token)?true:false);
+    }
+    
+    /*
+        如果通过用户名没有获取连接如何操作：
+            一种情况是分布式系统用户连接在另一台服务器
+            另一种情况是单机系统离线消息处理
+        此函数的操作仅仅是把消息放入消息队列，监听消息队列的
+        进程进行处理
+    */
+    protected function handleNotSock($from, $to, $msg)
+    {
+        $this->redis_out = new Redis();
+        $this->connect('127.0.0.1',6379);
+        $send_data = [
+            'from' => $from,
+            'to' => $to,
+            'type' => 'nosock',
+            'msg' => $msg
+        ];
+        $this->publish('outline_or_distribute', serialize($send_data));
     }
 
     protected function logout($server,$fd)
@@ -110,21 +145,39 @@ class wsChat
         return $org_msg;
     }
 
-    public function on_message($server, $cnn)
+    /*
+        转发消息的函数，处理过程要区分是普通用户之间转发还是群发消息
+        群发消息涉及到批量推送，还要考虑离线消息处理
+    */
+    public function transMsg($server, $req, $msg)
     {
-        $data = json_decode($cnn->data,true);
-        $msg = $this->parsemsg($cnn->data);
+
+        $sock = $this->getSockByUsername($msg['to']);
+        if (empty($sock)) {
+            $msg['msg_time'] = time();
+            $server->push($sock, json_encode($msg, JSON_UNESCAPED_UNICODE));
+        }
+        else{
+            $this->handleNotSock($msg['from'], $msg['to'], $msg);
+        }
+    }
+
+    public function on_message($server, $req)
+    {
+        $data = json_decode($req->data,true);
+        $msg = $this->parsemsg($req->data);
         if (empty($msg)) {
-            $server->push($cnn->fd, $this->format_sysmsg());
+            $server->push($req->fd, $this->format_sysmsg());
             return ;
         }
         //check if logout
         if ($msg=='//logout') {
-            $this->logout($cnn->fd);
-            $server->close($cnn->fd);
+            $this->logout($req->fd);
+            $server->close($req->fd);
             return ;
         }
-
+        $this->transMsg($server, $req, $msg);
+        /*
         $send_msg = $this->format_groupmsg(
                             $msg,
                             'text',
@@ -141,6 +194,7 @@ class wsChat
             }
             $server->push($kv['value'],$send_msg);
         }
+        */
     }
 
     public function on_shutdown($server)
@@ -158,17 +212,17 @@ class wsChat
             $server->push(
                 $req->fd,
                 $this->format_sysmsg(
-                            'you need to login',
-                            'server',
-                            '',
-                            'text',
+                            'not login',
+                            $req->fd,
+                            'sys_error',
                             -1
                         )
             );
             $server->close($req->fd);
+            return ;
         }
 
-        $this->bindTokenConn($req->get['user_token'], $req->fd);
+        $this->bindTokenSock($req->get['user_token'], $req->fd);
         
         $sys_msg = $this->format_sysmsg(
                             'you are login at '.  $req->fd,
