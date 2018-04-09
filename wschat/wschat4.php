@@ -11,10 +11,8 @@ class wsChat
     function __construct()
     {
         $this->server_pid = posix_getpid();
-        $this->mcache = new Memcached('wschat_pool');
         $this->auth_cache = new Memcached('auth');
         $this->auth_cache->addServer('localhost',11211);
-        $this->mcache->addServer('localhost',11211);
 
         $this->server = new swoole_websocket_server('localhost',7654);
         $this->server->set([
@@ -25,14 +23,17 @@ class wsChat
     //get username by token_$fd
     protected function getUserByConn($fd)
     {
-        $token = $this->auth_cache->get('token_'.$fd);
-        return $this->auth_cache->get($token);
+        $token = $this->auth_cache->get('sock_'.$fd);
+        $seri_info = $this->auth_cache->get('user_'.$token);
+        return unserialize($seri_info);
     }
 
     //bind token and sock id
     protected function bindTokenConn($token, $fd)
     {
-        $this->auth_cache->set('token_'.$fd, $token);
+        $this->auth_cache->set('sock_'.$fd, $token);
+        $username = $this->auth_cache->get($token);
+        $this->auth_cache->set('user_'.$token, serialize(['username'=>$username, 'sock'=>$fd]));
     }
 
     protected function checkUser($token)
@@ -167,7 +168,6 @@ class wsChat
             $server->close($req->fd);
         }
 
-        $this->mcache->set($this->conn_head.$req->fd, $req->fd);
         $this->bindTokenConn($req->get['user_token'], $req->fd);
         
         $sys_msg = $this->format_sysmsg(
