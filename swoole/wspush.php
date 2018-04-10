@@ -4,7 +4,7 @@ class wsPush
 {
     private $server;
     private $mcache;
-    private $conn_head = 'user_cnn_';
+    private $conn_head = 'user_sock_';
     private $client_index = 'push_manager';
     private $port = 4567;
 
