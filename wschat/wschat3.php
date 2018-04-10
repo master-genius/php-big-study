@@ -1,20 +1,16 @@
 <?php
 class wsChat
 {
-    private $sock_list = [];
     private $server;
     private $server_pid;
-    private $mcache;
     private $auth_cache;
-    private $conn_head = 'user_cnn_';
+    private $sock_head = 'user_sock_';
 
     function __construct()
     {
         $this->server_pid = posix_getpid();
-        $this->mcache = new Memcached('wschat_pool');
         $this->auth_cache = new Memcached('auth');
         $this->auth_cache->addServer('localhost',11211);
-        $this->mcache->addServer('localhost',11211);
 
         $this->server = new swoole_websocket_server('localhost',7654);
         $this->server->set([
@@ -92,17 +88,17 @@ class wsChat
     }
 
 
-    public function on_message($server, $cnn)
+    public function on_message($server, $req)
     {
-        $data = json_decode($cnn->data,true);
+        $data = json_decode($req->data,true);
         $msg = (isset($data['msg'])?$data['msg']:'');
         if (empty($msg)) {
             return ;
         }
         //check if logout
         if ($msg=='//logout') {
-            $this->logout($cnn->fd);
-            $server->close($cnn->fd);
+            $this->logout($req->fd);
+            $server->close($req->fd);
             return ;
         }
 
@@ -110,14 +106,14 @@ class wsChat
                             $msg,
                             'text',
                             time(),
-                            $this->getUserByConn($cnn->fd)
+                            $this->getUserByConn($req->fd)
                        );
 
         $keys = $this->mcache->getAllKeys();
         $this->mcache->getDelayed($keys);
         $key_vals = $this->mcache->fetchAll();
         foreach ($key_vals as $kv) {
-            if ($kv['value']==$cnn->fd) {
+            if ($kv['value']==$req->fd) {
                 continue;
             }
             $server->push($kv['value'],$send_msg);
@@ -149,7 +145,7 @@ class wsChat
             $server->close($req->fd);
         }
 
-        $this->mcache->set($this->conn_head.$req->fd, $req->fd);
+        $this->mcache->set($this->sock_head.$req->fd, $req->fd);
         $this->bindTokenConn($req->get['user_token'], $req->fd);
         
         $sys_msg = $this->format_sysmsg(
@@ -164,7 +160,7 @@ class wsChat
 
     public function on_close($server,$fd)
     {
-        $this->mcache->delete($this->conn_head.$fd,0);
+        $this->mcache->delete($this->sock_head.$fd,0);
         $this->auth_cache->delete('token_'.$fd,0);
     }
 

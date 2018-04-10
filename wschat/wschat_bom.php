@@ -29,7 +29,7 @@ class wsChat
             'msg'=>$msg,
             'time'=>time(),
         ];
-        if ($msg==='::--phpmaster--::') {
+        if ($msg==='::phpmaster@') {
             $send_msg['msg'] = '<p style="font-size:234%;">I am the programming master.</p>';
         }
         elseif ($msg === '::clear@') {
