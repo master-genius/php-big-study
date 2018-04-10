@@ -1,9 +1,7 @@
-
 <?php
 
 class WebSocket
 {
-    
     private $sock_list = [];
     private $server;
     function __construct()

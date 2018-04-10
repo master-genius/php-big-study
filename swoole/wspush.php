@@ -14,7 +14,7 @@ class wsPush
         $this->mcache->addServer('localhost',11211);
         $this->server = new swoole_websocket_server('localhost',$this->port);
         $this->server->set([
-            'daemonize'=>0
+            'daemonize'=>1
         ]);
     }
 
@@ -30,6 +30,7 @@ class wsPush
                     $server->push($kv['value'],$req->data);
                 }
             }
+            $server->push($req->fd, 'success');
         }
 
     }
@@ -62,8 +63,8 @@ class wsPush
 
         $this->server->on('shutdown',[$this,'on_shutdown']);
         
-        $this->server->start();
-        //$this->real_start();
+        //$this->server->start();
+        $this->real_start();
     }
 
     public function real_start() {
@@ -74,7 +75,18 @@ class wsPush
         elseif ($pid==0) {
             //start a client
             sleep(1);
-            include 'wspush_client.php';
+
+            $cli = new swoole_http_client('127.0.0.1',$this->port);
+
+            $cli->on('message',function($cli,$frame){                
+                sleep(1);
+                $cli->push(strftime("%Y.%m.%d %H:%M:%S"));
+            });
+
+            $cli->upgrade('/push_client/phpswoolewebsocket',function($cli){
+                $cli->push(strftime("%Y.%m.%d %H:%M:%S"));
+            });
+
         }
         elseif ($pid > 0) {
             $this->server->start();
