@@ -2,8 +2,6 @@
 
 class wsChat
 {
-    
-    private $sock_list = [];
     private $server;
     private $mcache;
     private $sock_head = 'user_sock_';
