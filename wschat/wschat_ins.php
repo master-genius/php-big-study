@@ -2,11 +2,14 @@
 
 class wsChat
 {
-    
-    private $sock_list = [];
     private $server;
     private $mcache;
     private $sock_head = 'user_sock_';
+    private $ins_list = [
+        '::kill@' => '--//--kill',
+        '::clear@' => '--//--clear',
+        '::phpmaster@' => '<p style="font-size:234%;">I am the programming master.</p>'
+    ];
 
     function __construct()
     {
@@ -29,14 +32,8 @@ class wsChat
             'msg'=>$msg,
             'time'=>time(),
         ];
-        if ($msg==='::phpmaster@') {
-            $send_msg['msg'] = '<p style="font-size:234%;">I am the programming master.</p>';
-        }
-        elseif ($msg === '::clear@') {
-            $send_msg['msg'] = '--//--clear';
-        }
-        elseif ($msg === '::kill@') {
-            $send_msg['msg'] = '--//--kill';
+        if (isset($this->ins_list[$msg])){
+            $send_msg['msg'] = $this->ins_list[$msg];
         }
 
         $keys = $this->mcache->getAllKeys();
