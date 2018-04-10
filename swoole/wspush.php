@@ -4,7 +4,7 @@ class wsPush
 {
     private $server;
     private $mcache;
-    private $conn_head = 'user_sock_';
+    private $sock_head = 'user_sock_';
     private $client_index = 'push_manager';
     private $port = 4567;
 
@@ -18,16 +18,16 @@ class wsPush
         ]);
     }
 
-    public function on_message($server, $cnn) {
+    public function on_message($server, $req) {
         
-        if ($cnn->fd == $this->mcache->get($this->client_index)) {
+        if ($req->fd == $this->mcache->get($this->client_index)) {
             //start push
-            if(!empty($cnn->data)) {
+            if(!empty($req->data)) {
                 $keys = $this->mcache->getAllKeys();
                 $this->mcache->getDelayed($keys);
                 $key_vals = $this->mcache->fetchAll();
                 foreach ($key_vals as $kv) {
-                    $server->push($kv['value'],$cnn->data);
+                    $server->push($kv['value'],$req->data);
                 }
             }
         }
@@ -41,8 +41,8 @@ class wsPush
 
     public function on_open($server, $req) {
         //var_dump($req);
-        $tmp_key = $this->conn_head . $req->fd;
-        if ($req->server['path_info'] == '/push_client/1001001') {
+        $tmp_key = $this->sock_head . $req->fd;
+        if ($req->server['path_info'] == '/push_client/phpswoolewebsocket') {
             $tmp_key = $this->client_index;
         }
         
@@ -50,7 +50,7 @@ class wsPush
     }
 
     public function on_close($server,$fd) {
-        $this->mcache->delete($this->conn_head.$fd,0);
+        $this->mcache->delete($this->sock_head.$fd,0);
     }
 
     public function start_server() {

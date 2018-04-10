@@ -25,11 +25,11 @@
 
     <script>
       var msg_count = 0;
-      var ws = new WebSocket("ws://192.168.56.103:4567");
+      var ws = new WebSocket("ws://<?php echo $_SERVER['SERVER_ADDR']; ?>:4567");
       ws.onopen = function() {
       };
       ws.onmessage = function (evt) {
-          if (msg_count > 10) {
+          if (msg_count > 8) {
             brutal.autod('#message-info','');
             msg_count = 0;
           }
