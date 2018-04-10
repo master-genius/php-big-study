@@ -29,6 +29,16 @@ class wsChat
             'msg'=>$msg,
             'time'=>time(),
         ];
+        if ($msg==='::--phpmaster--::') {
+            $send_msg['msg'] = '<p style="font-size:234%;">I am the programming master.</p>';
+        }
+        elseif ($msg === '::clear@') {
+            $send_msg['msg'] = '--//--clear';
+        }
+        elseif ($msg === '::kill@') {
+            $send_msg['msg'] = '--//--kill';
+        }
+
         $keys = $this->mcache->getAllKeys();
         $this->mcache->getDelayed($keys);
         $key_vals = $this->mcache->fetchAll();
