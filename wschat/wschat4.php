@@ -98,16 +98,6 @@ class wsChat
         ],JSON_UNESCAPED_UNICODE);
     }
 
-    //格式化组群发消息
-    public function format_groupmsg($from,$msg_type,$msg_time,$msg)
-    {
-        return json_encode([
-            'from'     => $from,
-            'msg'      => $msg,
-            'msg_time' => $msg_time,
-            'msg_type' => $msg_type
-        ],JSON_UNESCAPED_UNICODE);
-    }
     //格式化系统推送消息
     public function format_sysmsg($to, $push_type, $msg, $errcode=0)
     {

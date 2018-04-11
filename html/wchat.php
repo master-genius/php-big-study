@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html style="height:100%;">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>WSChat Test</title>
+    <link href="fdflex.min.css" rel="stylesheet" type="text/css">
+    <script src="brutal_1711.js"></script>
+    <style>
+      .container{
+        width:100%;
+        height:100%;
+        margin:auto;
+        overflow-x:hidden;
+      }
+      .send-msg-block{
+        z-index:1024;
+        position:fixed;
+        bottom:0rem;
+        width:100%;
+        min-height:13%;
+        background-color: #00b2ee;
+      }
+      .msg-list-block{
+        z-index:1;
+        position: fixed;
+        width:65%;
+        height: 75%;
+        overflow-y: auto;
+        overflow-x: hidden;
+        border: .1rem solid #ff6347 ;
+      }
+      .system-msg-block{
+        z-index:1;
+        position: fixed;
+        right:0;
+        border-top:.1rem solid #34aacd;
+        border-bottom:.1rem solid #34aacd;
+        width:35%;
+        height: 75%;
+        overflow-y: auto;
+        overflow-x: hidden;
+      }
+    </style>
+  </head>
+
+  <body  style="height:100%;overflow:hidden;background-color:#f5f5dc;">
+    <div class="container">
+      
+      <div class="msg-list-block" id="msg-list-block">
+        <div class="row">
+          <div class="column small-12" style="">
+            <div id="msg-list">
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="system-msg-block" id="system-msg-block">
+          <div class="row">
+            <div class="column small-12" style="">
+              <a href="javascript:ajax_logout();" id="logout" class="hide">
+                <h5 style="color:#ff4512;">Logout</h5>
+              </a>
+              <div id="system-info">
+  
+              </div>
+            </div>
+          </div>
+        </div>
+
+      <div class="send-msg-block">
+        <div class="row" style="margin-top:1.5%;">
+          <div class="column small-12 medium-9 large-8">
+            <form onsubmit="return false;">
+              <div class="input-group">
+                  <input type="text" value="" id="my-message" class="input-group-field">
+                <div class="input-group-button">
+                  <input type="submit" class="button hollow alert" value="send" onsubmit="wsc_send_msg()" onclick="wsc_send_msg()">
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="column medium-3 large-4 hide-for-small-only">
+            @_@
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      var msg_count = 1;
+      var token = '';
+
+      var conn = {
+        ip:"<?php echo $_SERVER['SERVER_ADDR']; ?>",
+        login_port:1990,
+        chat_port:7654,
+        url:'ws://',
+        ws:null,
+        login_status:0,
+        token:'',
+      };
+
+      
+
+      function conn_url() {
+        return 'ws://'+conn.ip+':'+conn.chat_port+'?user_token='+conn.token;
+      }
+      /*
+         由于刷新页面，Websocket会断开连接。每次刷新页面需要重新发起连接，
+         这要求根据登录状态确定是否发起连接，如果已经登录则发起连接，
+         否则等待用户输入密码通过验证后发起连接。
+      */
+      
+      if (localStorage.getItem('user_token')) {
+        conn.token = localStorage.getItem('user_token');
+        init_conn();
+      } else {
+        show_login();
+      }
+
+      function init_conn() {
+        conn.ws = new WebSocket(conn_url());
+        conn.ws.onopen = function() {
+          brutal.autonode('#logout').className="";
+        };
+        conn.ws.onclose = function() {
+          //clear connect
+          brutal.autonode('#logout').className="hide";
+        }
+        conn.ws.onmessage = function (evt) {
+            if (msg_count > 1000) {
+              brutal.autonode('#msg-list').removeChild(brutal.autonode('#msg-list','first'));
+            }
+            var json_msg = JSON.parse(evt.data);
+            var msg = '';
+            if (json_msg.msg_source!==undefined) {
+              brutal.autod('#system-info','<p>'+json_msg.msg+'</p>',true);
+              if (json_msg.error!==undefined && json_msg.error==-1) {
+                localStorage.removeItem('user_token');
+                show_login();
+                conn.ws.close();
+              }
+            } else {
+              msg_count += 1;
+              msg = json_msg.from+':<br>&nbsp;&nbsp;&nbsp;&nbsp;'+json_msg.msg+'<br>';
+              brutal.autod('#msg-list',msg,true);
+              brutal.autonode('#msg-list-block').scrollTop = 
+                brutal.autonode('#msg-list-block').scrollHeight;
+            }
+            
+        };
+
+      }
+
+      function wsc_send_msg(){
+        var msg = brutal.autod('#my-message');
+        if(msg==''){
+          return ;
+        }
+        conn.ws.send( JSON.stringify( {"msg":msg} ) );
+        brutal.autod('#my-message','');
+        brutal.autod('#msg-list','<p style="text-align:right;">'+msg+'</p>',true);
+        brutal.autonode('#msg-list-block').scrollTop = 
+            brutal.autonode('#msg-list-block').scrollHeight;
+      }
+      
+      function show_login()
+      {
+        var html = '<div class="row" style="margin-top:1.2%;">'+
+          '<div class="small-2 column">&nbsp;</div>'+
+          '<div class="small-8 column">'+
+            '<form onsubmit="return false;">'+
+              '<input type="text" id="username" placeholder="username">'+
+              '<input type="text" id="passwd" placeholder="passwd">'+
+              '<input type="submit" value="submit" class="button hollow small alert" onclick="ajax_login()">'+
+            '</form>'+
+            '<p id="login-tip"></p>'+
+          '</div>'+
+          '<div class="small-2 column">&nbsp;</div>'+
+        '</div>';
+        brutal.autod('#msg-list',html);
+      }
+      
+      function ajax_login() {
+        var user = {
+          username:brutal.autod('#username'),
+          passwd:brutal.autod('#passwd')
+        };
+        brutal.areq.post({
+          url:'http://'+conn.ip+':'+conn.login_port+'/wsauth.php',
+          data:brutal.jsontodata(user),
+          success:function(xr){
+            if (xr.error) {
+              brutal.autod('#login-tip',xr.errmsg);
+            } else {
+              conn.token = xr.token;
+              localStorage.setItem('user_token',xr.token);
+              brutal.autod('#msg-list','');
+              init_conn();
+            }
+          }
+        });
+      }
+
+      function ajax_logout() {
+        conn.ws.send( JSON.stringify( {"msg":'//logout'} ) );
+        conn.ws.close();
+        localStorage.removeItem('user_token');
+        show_login();
+        brutal.autonode('#logout').className="hide";
+      }
+      
+      function parse_msg(data) {
+        var msg = JSON.parse(data);
+        switch(msg.msg_type) {
+            
+        }
+      }
+      
+    </script>
+  </body>
+</html>

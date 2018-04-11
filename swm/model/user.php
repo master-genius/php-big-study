@@ -18,19 +18,19 @@ class user
         if (empty($u)) {
             return false;
         }
-
         $mch = $this->memCache();        
         $token = $mch->get($username); 
         $mch->quit();
         if ($token) {
             return $token;
         }
+
         return $this->setToken($u);
     }
 
     private function genToken($user)
     {
-        return hash('sha512',md5($user.time()) . mt_rand(1000,10000));
+        return hash('sha512',md5($user.time()));
     }
 
     public function register($u)
@@ -73,7 +73,7 @@ class user
                 'username' => $username
             ];
         }
-        $u = DB::instance()->select($this->table, "*", $w);
+        $u = DB::instance()->get($this->table, "*", $w);
         if (empty($u)) {
             return [];
         }
