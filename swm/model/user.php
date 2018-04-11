@@ -25,7 +25,7 @@ class user
         if ($token) {
             return $token;
         }
-        return $this->setToken($username);
+        return $this->setToken($u);
     }
 
     private function genToken($user)
@@ -85,17 +85,19 @@ class user
         return (empty($this->userInfo($username,$passwd))?false:true);
     }
 
-    private function memCache(){
+    private function memCache()
+    {
         $mch = new \Memcached('auth');
         $mch->addServer('localhost',11211);
         return $mch;
     }
 
-    public function setToken($username){
+    public function setToken($u)
+    {
         $mch = $this->memCache();
-        $token = $this->genToken($username);
-        $mch->set($token,$username);
-        $mch->set($username, $token);
+        $token = $this->genToken($u['username']);
+        $mch->set($token,serialize($u));
+        $mch->set($u['username'], $token);
         $mch->quit();
         return $token;
     }

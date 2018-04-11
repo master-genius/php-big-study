@@ -87,16 +87,17 @@ class wsChat
         $this->auth_cache->delete($token,0);
     }
     //格式化用户消息
-    public function format_usermsg($from,$to,$msg_type,$msg_time,$msg)
+    public function format_usermsg($from, $to, $msg_type, $msg, $msg_time=0)
     {
         return json_encode([
             'from'      => $from,
             'to'        => $to,
             'msg'       => $msg,
             'msg_type'  => $msg_type,
-            'time'      => $msg_time
+            'time'      => (($msg_time==0)?time():$msg_time)
         ],JSON_UNESCAPED_UNICODE);
     }
+
     //格式化组群发消息
     public function format_groupmsg($from,$msg_type,$msg_time,$msg)
     {
@@ -191,8 +192,6 @@ class wsChat
 
     public function on_shutdown($server)
     {
-        $this->mcache->deleteMulti($this->mcache->getAllKeys());
-        $this->mcache->quit();
         $this->auth_cache->deleteMulti($this->auth_cache->getAllKeys());
         $this->auth_cache->quit();
     }
