@@ -1,13 +1,13 @@
 <?php
 class wsChat
 {
-    private $sock_list = [];
     private $server;
     private $server_pid;
-    private $mcache;
     private $auth_cache;
-    private $conn_head = 'user_cnn_';
+    private $sock_head = 'user_sock_';
     private $redis_out = '';
+    //客户端验证密码
+    private $client_key = '1001001';
 
     function __construct()
     {
@@ -22,7 +22,7 @@ class wsChat
     }
 
     //get username by token_$fd
-    protected function getUserByConn($fd)
+    public function getUserByConn($fd)
     {
         $token = $this->auth_cache->get('sock_'.$fd);
         $seri_info = $this->auth_cache->get('user_'.$token);
@@ -30,7 +30,7 @@ class wsChat
     }
 
     //bind token and sock id
-    protected function bindTokenSock($token, $fd)
+    public function bindTokenSock($token, $fd)
     {
         /*
             绑定token和sock连接，此操作要获取之前已保存的token => [user info]信息
@@ -45,13 +45,13 @@ class wsChat
         //$this->auth_cache->set($token, serialize($userinfo));
     }
 
-    protected function getSockByUsername($username)
+    public function getSockByUsername($username)
     {
         $sock = $this->auth_cache->get($username);
         return ($sock?$sock:false);
     }
 
-    protected function checkUser($token)
+    public function checkUser($token)
     {
         return ($this->auth_cache->get($token)?true:false);
     }
@@ -63,10 +63,10 @@ class wsChat
         此函数的操作仅仅是把消息放入消息队列，监听消息队列的
         进程进行处理
     */
-    protected function handleNotSock($from, $to, $msg)
+    public function handleNotSock($from, $to, $msg)
     {
         $this->redis_out = new Redis();
-        $this->connect('127.0.0.1',6379);
+        $this->sockect('127.0.0.1',6379);
         $send_data = [
             'from' => $from,
             'to' => $to,
@@ -76,15 +76,18 @@ class wsChat
         $this->publish('outline_or_distribute', serialize($send_data));
     }
 
-    protected function logout($server,$fd)
+    public function logout($server,$fd)
     {
-        $username = $this->getUser($fd);
-        //通过token和连接套接字的关联获取user_token并删除
-        $this->auth_cache->delete($this->auth_cache->get('token_'.$fd),0);
-        $this->auth_cache->delete($username,0);
+        $token = $this->auth_cache->get('sock_' . $fd);
+        $userinfo = serialize($this->auth_cache->get($token));
+        if ($userinfo) {
+            $this->auth_cache->delete($userinfo['username'],0);
+        }
+        $this->auth_cache->delete('sock_'.$fd,0);
+        $this->auth_cache->delete($token,0);
     }
     //格式化用户消息
-    public function format_usermsg($from,$to,$msg,$msg_type,$msg_time)
+    public function format_usermsg($from,$to,$msg_type,$msg_time,$msg)
     {
         return json_encode([
             'from'      => $from,
@@ -95,7 +98,7 @@ class wsChat
         ],JSON_UNESCAPED_UNICODE);
     }
     //格式化组群发消息
-    public function format_groupmsg($msg,$msg_type,$msg_time,$from)
+    public function format_groupmsg($from,$msg_type,$msg_time,$msg)
     {
         return json_encode([
             'from'     => $from,
@@ -105,8 +108,9 @@ class wsChat
         ],JSON_UNESCAPED_UNICODE);
     }
     //格式化系统推送消息
-    public function format_sysmsg($msg, $to, $push_type, $errcode=0)
+    public function format_sysmsg($to, $push_type, $msg, $errcode=0)
     {
+        /*push_type: error , url , img , text*/
         $sysmsg = [
             'msg_type' => 'server_push',
             'to' => $to,
@@ -118,7 +122,11 @@ class wsChat
         return  json_encode($sysmsg,JSON_UNESCAPED_UNICODE);
     }
 
-    protected function parsemsg($data)
+    public function sys_errmsg($to,$msg) {
+        return $this->format_sysmsg($to, 'error', $msg, -1);
+    }
+
+    public function parsemsg($data)
     {
         $org_msg = json_decode($data, true);
         if (empty($org_msg)) {
@@ -148,6 +156,8 @@ class wsChat
     /*
         转发消息的函数，处理过程要区分是普通用户之间转发还是群发消息
         群发消息涉及到批量推送，还要考虑离线消息处理
+        群发消息并不在此处处理，群发消息是通过API发送并交给消息队列的
+        监听进程处理，此进程处理后发送给消息服务处理程序
     */
     public function transMsg($server, $req, $msg)
     {
@@ -167,7 +177,7 @@ class wsChat
         $data = json_decode($req->data,true);
         $msg = $this->parsemsg($req->data);
         if (empty($msg)) {
-            $server->push($req->fd, $this->format_sysmsg());
+            $server->push($req->fd, $this->sys_errmsg($req->fd, 'Error: message type wrong'));
             return ;
         }
         //check if logout
@@ -177,24 +187,6 @@ class wsChat
             return ;
         }
         $this->transMsg($server, $req, $msg);
-        /*
-        $send_msg = $this->format_groupmsg(
-                            $msg,
-                            'text',
-                            time(),
-                            $this->getUserByConn($cnn->fd)
-                       );
-
-        $keys = $this->mcache->getAllKeys();
-        $this->mcache->getDelayed($keys);
-        $key_vals = $this->mcache->fetchAll();
-        foreach ($key_vals as $kv) {
-            if ($kv['value']==$cnn->fd) {
-                continue;
-            }
-            $server->push($kv['value'],$send_msg);
-        }
-        */
     }
 
     public function on_shutdown($server)
@@ -211,33 +203,27 @@ class wsChat
 
             $server->push(
                 $req->fd,
-                $this->format_sysmsg(
-                            'not login',
-                            $req->fd,
-                            'sys_error',
-                            -1
-                        )
+                $this->sys_errmsg($req->fd, 'not login')
             );
             $server->close($req->fd);
             return ;
         }
 
         $this->bindTokenSock($req->get['user_token'], $req->fd);
-        
-        $sys_msg = $this->format_sysmsg(
-                            'you are login at '.  $req->fd,
-                            'server',
-                            '',
-                            'text'
-                        );
-
-        $server->push($req->fd,$sys_msg);
+        $server->push($req->fd, 'success');
     }
 
+    /*
+        onclose事件处理要先通过连接获取token，通过token获取用户信息
+        然后删除用户名对应的连接sock值。
+    */
     public function on_close($server,$fd)
     {
-        $this->mcache->delete($this->conn_head.$fd,0);
-        $this->auth_cache->delete('token_'.$fd,0);
+        $token = $this->auth_cache->get('sock_' . $fd);
+        $userinfo = serialize($this->auth_cache->get($token));
+        if ($userinfo) {
+            $this->auth_cache->delete($userinfo['username'],0);
+        }
     }
 
     public function start_server()
