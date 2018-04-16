@@ -18,7 +18,7 @@ function arr_to_json($arr)
     $ii = is_ind($arr);
     $json = ($ii?'{':'[');
 
-    if (is_ind($arr)) {
+    if ($ii) {
         foreach($arr as $k=>$v) {
             if(is_array($v)) {
                 $json .= '"'.$k.'":' . arr_to_json($v) . ',';
