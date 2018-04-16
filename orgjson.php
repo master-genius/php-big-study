@@ -8,8 +8,11 @@ function is_ind($a) {
 }
 
 function json_num_str($v)
-{
-    return (is_numeric($v)?($v . ','):('"' . $v  . '",'));
+{ 
+    //转换" -> \"  \ -> \\ ，但是 ' 不能是 \' 要变成 '
+    return (is_numeric($v)?($v . ','):
+            ('"' . str_replace("\\'","'",addslashes($v))  . '",')
+           );
 }
 
 function arr_to_json($arr)
@@ -39,6 +42,9 @@ function arr_to_json($arr)
     return rtrim($json,',') . ($ii?'}':']');
 }
 
+/*
+   start test
+*/
 $a = [
     'a' => 'abc',
     'b' => 123,
@@ -53,7 +59,16 @@ $c = [
     'name'=>'BraveWang',
     'age' => 28,
     'skill' => [
-        'Linux','C','PHP','Python','Shell Script','MySQL','Nginx','a'=>'Master'
+        'Linux','C','PHP','Python','Shell Script','MySQL','Nginx'
+    ]
+];
+
+$d = [
+    'sdf' => [
+        '"sdf"sdf"','\'sdfewer\''
+    ],
+    'dch' => [
+        ":sdf:\"",':,\\'
     ]
 ];
 
@@ -81,5 +96,12 @@ $more = [
 echo arr_to_json($a),"\n";
 echo arr_to_json($b),"\n";
 echo arr_to_json($c),"\n";
+echo arr_to_json($d),"\n";
 echo arr_to_json($more),"\n";
+
+echo json_encode($a),"\n";
+echo json_encode($b),"\n";
+echo json_encode($c),"\n";
+echo json_encode($d),"\n";
+echo json_encode($more),"\n";
 
