@@ -1,5 +1,4 @@
 <?php
-
 function is_ind($a) {
     if (is_array($a)) {
         $keys = array_keys($a);
@@ -17,7 +16,6 @@ function arr_to_json($arr)
 {
     $ii = is_ind($arr);
     $json = ($ii?'{':'[');
-
     if ($ii) {
         foreach($arr as $k=>$v) {
             if(is_array($v)) {
