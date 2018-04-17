@@ -9,9 +9,11 @@ function is_ind($a) {
 
 function json_num_str($v)
 { 
-    //转换" -> \"  \ -> \\ ，但是 ' 不能是 \' 要变成 '
-    return (is_numeric($v)?($v . ','):
-            ('"' . str_replace("\\'","'",addslashes($v))  . '",')
+    //转换" -> \"  \ -> \\ ，但是 ' 不能是 \' 要变成 ',object直接转换成{}
+    return (is_object($v)?'{},':
+                (is_numeric($v)?($v . ','):
+                    ('"' . str_replace("\\'","'",addslashes($v))  . '",')
+                )
            );
 }
 
@@ -23,20 +25,14 @@ function arr_to_json($arr)
         foreach($arr as $k=>$v) {
             if(is_array($v)) {
                 $json .= '"'.$k.'":' . arr_to_json($v) . ',';
-            }
-            else{
+            } else {
                 $json .= '"' . $k . '":' . json_num_str($v);
             }
         }
     }
     else{
         foreach($arr as $v) {
-            if(is_array($v)) {
-                $json .=  arr_to_json($v) . ',';
-            }
-            else{
-                $json .= json_num_str($v);
-            }
+            $json .= (is_array($v)?(arr_to_json($v) . ','):json_num_str($v));
         }
     }
     return rtrim($json,',') . ($ii?'}':']');
@@ -90,18 +86,34 @@ $more = [
                 2,3,4,5
             ]
         ]
+    ],
+    [
+        ['abc','bcd','cde'],
+        ['xyz','aui','qwe']
     ]
 ];
 
-echo arr_to_json($a),"\n";
-echo arr_to_json($b),"\n";
-echo arr_to_json($c),"\n";
-echo arr_to_json($d),"\n";
-echo arr_to_json($more),"\n";
+$oa = [
+    'redis' => (new Redis()),
+    'memcache' => (new Memcached())
+];
 
-echo json_encode($a),"\n";
-echo json_encode($b),"\n";
-echo json_encode($c),"\n";
-echo json_encode($d),"\n";
-echo json_encode($more),"\n";
+$aset = [$a,$b,$c,$d,$more,$oa];
+
+foreach ($aset as $ar) {
+    echo arr_to_json($ar),"\n";
+    echo json_encode($ar),"\n\n";
+}
+
+try{
+    $pdo = new PDO('mysql:host=127.0.0.1;dbname=hzwjsmall','master','master2018');
+    $sql = "select goods_id,goods_serial,goods_name,goods_price".
+            " from sh_goods limit 0,10";
+    $ph = $pdo->query($sql);
+    $goods_list = $ph->fetchAll(PDO::FETCH_ASSOC);
+    $json_goods = arr_to_json($goods_list);
+    echo $json_goods,"\n";
+} catch (Exception $e) {
+    exit($e->getMessage());
+}
 
