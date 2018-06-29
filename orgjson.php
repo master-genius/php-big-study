@@ -105,15 +105,4 @@ foreach ($aset as $ar) {
     echo json_encode($ar),"\n\n";
 }
 
-try{
-    $pdo = new PDO('mysql:host=127.0.0.1;dbname=hzwjsmall','master','master2018');
-    $sql = "select goods_id,goods_serial,goods_name,goods_price".
-            " from sh_goods limit 0,10";
-    $ph = $pdo->query($sql);
-    $goods_list = $ph->fetchAll(PDO::FETCH_ASSOC);
-    $json_goods = arr_to_json($goods_list);
-    echo $json_goods,"\n";
-} catch (Exception $e) {
-    exit($e->getMessage());
-}
 
