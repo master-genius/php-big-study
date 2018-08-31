@@ -17,7 +17,7 @@
         position:fixed;
         width:100%;
         height:15%;
-        background-color: #f5f5dc;
+        background-color: #e8e8ea;
         bottom:0rem;
       }
       .msg-list-block{
@@ -35,7 +35,7 @@
     <div class="container" id="main-block">
       <div class="row">
         <div class="column small-12 medium-12 large-9" style="overflow:hidden;">
-          <div class="msg-list-block" id="msg-list" style="font-size:135%;">
+          <div class="msg-list-block" id="msg-list" style="font-size:86%;">
 
           </div>
         </div>
