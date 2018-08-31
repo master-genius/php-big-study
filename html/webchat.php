@@ -87,27 +87,11 @@
                   true
                 );
           } else {
-            if (json_msg.msg == '--//--clear') {
-              brutal.autod('#msg-list','');
-              msg_count=0;
-            }
-            else if (json_msg.msg == '--//--kill') {
-              //window.location.reload(true);
-              var main_html = brutal.autod('#main-block');
-              brutal.autod('#main-block', `<div style="text-align:center;">
-                    <p style="font-size:280%;">--fobid--</p></div>`);
-              setTimeout(() => {
-                brutal.autod('#main-block',main_html);
-              }, 1000);
-            }
-            else {
               msg_count += 1;
               msg = `${json_msg.from_id}:<br>&nbsp;&nbsp;&nbsp;&nbsp;
                       ${json_msg.msg}<br>`;
               brutal.autod('#msg-list',msg,true);
-              brutal.autonode('#msg-list').scrollTop = 
-              brutal.autonode('#msg-list').scrollHeight;
-            }
+              brutal.autonode('#msg-list').scrollTop = brutal.autonode('#msg-list').scrollHeight;
           }
           
           
