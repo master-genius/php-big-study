@@ -93,9 +93,19 @@ $more = [
     ]
 ];
 
+class A
+{
+    private $name = 'albert';
+}
+
+class B
+{
+    private $name = 'bruce';
+}
+
 $oa = [
-    'redis' => (new Redis()),
-    'memcache' => (new Memcached())
+    'obja' => (new A()),
+    'objb' => (new B())
 ];
 
 $aset = [$a,$b,$c,$d,$more,$oa];
